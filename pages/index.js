@@ -1,209 +1,164 @@
 import Head from 'next/head'
+import LayoutMain from '../layouts/main';
+import ScreenStart from '../components/screens/start';
+import ScreenBackup from '../components/screens/backup';
+import ScreenCreatePassword from '../components/screens/createPassword';
+import ScreenEnterPassword from '../components/screens/enterPassword';
+import ScreenReadyToGo from '../components/screens/readyToGo';
+import ScreenMain from '../components/screens/main';
+import ScreenAbout from '../components/screens/about';
 
-export default function Home() {
-  return (
-    <div className="container">
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
 
-      <main>
-        <h1 className="title">
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
+const crypto = require('crypto');
 
-        <p className="description">
-          Get started by editing <code>pages/index.js</code>
-        </p>
+import {menus, signals} from '../components/types';
 
-        <div className="grid">
-          <a href="https://nextjs.org/docs" className="card">
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
+class Home extends React.Component {
 
-          <a href="https://nextjs.org/learn" className="card">
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
+    constructor (props){
+        super (props);
+        this.toParent = this.toParent.bind(this);
+        this.state = {
+            menu: menus.START,
+            words: [],
+            menuPanel: false,
+            addressList: [],
+            password: ''
+        };
+    }
 
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className="card"
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className="card"
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className="logo" />
-        </a>
-      </footer>
-
-      <style jsx>{`
-        .container {
-          min-height: 100vh;
-          padding: 0 0.5rem;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
+    toParent (data){
+        console.log('toParent');
+        console.log(data);
+        switch (data.type){
+            case (signals.MNEMONIC_WORDS):
+                this.setState({
+                    words: data.data.words,
+                    addressList: data.data.addressList,
+                    menu: menus.MNEMONICS
+                });
+                localStorage.setItem('walletData', JSON.stringify(data.data));
+                sessionStorage.setItem('walletData', JSON.stringify(data.data));
+                break;
+            case (signals.BACKUP):
+                this.setState({
+                    words: data.data.words,
+                    menu: menus.BACKUP
+                });
+                break;
+            case (signals.CREATE_PASSWORD):
+                this.setState({
+                    menu: menus.CREATE_PASSWORD
+                });
+                break;
+            case (signals.CHANGE_PASSWORD):
+                this.setState({
+                    menu: menus.CHANGE_PASSWORD
+                });
+                break;
+            case (signals.ENTER_PASSWORD):
+                this.setState({
+                    menu: menus.ENTER_PASSWORD
+                });
+                break;
+            case (signals.PASSWORD_CREATED):
+                this.setState({
+                    menu: menus.PASSWORD_CREATED,
+                    password: data.password
+                });
+                localStorage.setItem('walletData', this.encrypt(localStorage.getItem('walletData'), data.password));
+                sessionStorage.setItem('password', data.password);
+                break;
+            case (signals.PASSWORD_CHANGED):
+                localStorage.setItem('walletData', this.encrypt(sessionStorage.getItem('walletData'), data.password));
+                sessionStorage.setItem('password', data.password);
+                this.setState({
+                    menu: menus.MAIN
+                });
+                break;
+            case (signals.PASSWORD_ENTERED):
+                sessionStorage.setItem('walletData', this.decrypt(localStorage.getItem('walletData'), data.password));
+                sessionStorage.setItem('password', data.password);
+                this.setState({
+                    menu: menus.MAIN
+                });
+                break;
+            case (signals.LOAD_MAIN):
+                this.setState({
+                    menu: menus.MAIN
+                });
+                break;
+            case (signals.LOAD_START):
+                this.setState({
+                    menu: menus.START
+                });
+                break;
+            case (signals.SWITCH_MENU_PANEL):
+                this.setState({
+                    menuPanel: !this.state.menuPanel
+                });
+                break;
+            case (signals.ABOUT):
+                this.setState({
+                    menu: menus.ABOUT
+                });
+                break;
         }
-
-        main {
-          padding: 5rem 0;
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
+        if (data.type !== signals.SWITCH_MENU_PANEL){
+            this.setState({
+                menuPanel: false
+            });
         }
+    }
+    encrypt (data, password){
+        let mykey1 = crypto.createCipher('aes-128-cbc', password);
+        let mystr1 = mykey1.update(data, 'utf8', 'hex');
+        mystr1 += mykey1.final('hex');
+        return mystr1;
+    }
+    decrypt (data, password){
+        if (password == '')
+            return data;
+        let mykey2 = crypto.createDecipher('aes-128-cbc', password);
+        let mystr2 = mykey2.update(data, 'hex', 'utf8');
+        mystr2 += mykey2.final('utf8');
+        return mystr2;
+    }
 
-        footer {
-          width: 100%;
-          height: 100px;
-          border-top: 1px solid #eaeaea;
-          display: flex;
-          justify-content: center;
-          align-items: center;
+    render(){
+        let page = <ScreenStart toParent={this.toParent} />;
+        console.log(this.state.menu);
+        switch (this.state.menu){
+            case (menus.START):
+                page = <ScreenStart toParent={this.toParent} />;
+                break;
+            case (menus.MNEMONICS):
+            case (menus.BACKUP):
+                page = <ScreenBackup toParent={this.toParent} words={this.state.words} type={this.state.menu} />;
+                break;
+            case (menus.CREATE_PASSWORD):
+            case (menus.CHANGE_PASSWORD):
+                page = <ScreenCreatePassword toParent={this.toParent} encrypt={this.encrypt} type={this.state.menu} />;
+                break;
+            case (menus.ENTER_PASSWORD):
+                page = <ScreenEnterPassword toParent={this.toParent} decrypt={this.decrypt} />;
+                break;
+            case (menus.PASSWORD_CREATED):
+                page = <ScreenReadyToGo toParent={this.toParent} />;
+                break;
+            case (menus.MAIN):
+                page = <ScreenMain toParent={this.toParent} decrypt={this.decrypt} />;
+                break;
+            case (menus.ABOUT):
+                page = <ScreenAbout toParent={this.toParent} />;
+                break;
         }
-
-        footer img {
-          margin-left: 0.5rem;
-        }
-
-        footer a {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-
-        a {
-          color: inherit;
-          text-decoration: none;
-        }
-
-        .title a {
-          color: #0070f3;
-          text-decoration: none;
-        }
-
-        .title a:hover,
-        .title a:focus,
-        .title a:active {
-          text-decoration: underline;
-        }
-
-        .title {
-          margin: 0;
-          line-height: 1.15;
-          font-size: 4rem;
-        }
-
-        .title,
-        .description {
-          text-align: center;
-        }
-
-        .description {
-          line-height: 1.5;
-          font-size: 1.5rem;
-        }
-
-        code {
-          background: #fafafa;
-          border-radius: 5px;
-          padding: 0.75rem;
-          font-size: 1.1rem;
-          font-family: Menlo, Monaco, Lucida Console, Liberation Mono,
-            DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace;
-        }
-
-        .grid {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-wrap: wrap;
-
-          max-width: 800px;
-          margin-top: 3rem;
-        }
-
-        .card {
-          margin: 1rem;
-          flex-basis: 45%;
-          padding: 1.5rem;
-          text-align: left;
-          color: inherit;
-          text-decoration: none;
-          border: 1px solid #eaeaea;
-          border-radius: 10px;
-          transition: color 0.15s ease, border-color 0.15s ease;
-        }
-
-        .card:hover,
-        .card:focus,
-        .card:active {
-          color: #0070f3;
-          border-color: #0070f3;
-        }
-
-        .card h3 {
-          margin: 0 0 1rem 0;
-          font-size: 1.5rem;
-        }
-
-        .card p {
-          margin: 0;
-          font-size: 1.25rem;
-          line-height: 1.5;
-        }
-
-        .logo {
-          height: 1em;
-        }
-
-        @media (max-width: 600px) {
-          .grid {
-            width: 100%;
-            flex-direction: column;
-          }
-        }
-      `}</style>
-
-      <style jsx global>{`
-        html,
-        body {
-          padding: 0;
-          margin: 0;
-          font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
-            Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
-            sans-serif;
-        }
-
-        * {
-          box-sizing: border-box;
-        }
-      `}</style>
-    </div>
-  )
+        return (
+            <LayoutMain menuPanel={this.state.menuPanel} toParent={this.toParent}>
+                {page}
+            </LayoutMain>
+        )
+    }
 }
+
+export default Home;
