@@ -14,6 +14,6 @@
     "qrcode": "^1.4.4",
     "react": "16.13.1",
     "react-dom": "16.13.1",
-    "tonweb": "0.0.9"
+    "tonweb": "git+https://github.com/ton-rocks/tonweb.git"
   }
 }
