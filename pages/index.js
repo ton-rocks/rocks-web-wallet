@@ -1,4 +1,5 @@
 import Head from 'next/head'
+const crypto = require('crypto');
 import LayoutMain from '../layouts/main';
 import ScreenStart from '../components/screens/start';
 import ScreenBackup from '../components/screens/backup';
@@ -7,9 +8,9 @@ import ScreenEnterPassword from '../components/screens/enterPassword';
 import ScreenReadyToGo from '../components/screens/readyToGo';
 import ScreenMain from '../components/screens/main';
 import ScreenAbout from '../components/screens/about';
+import ScreenImport from '../components/screens/import';
 
 
-const crypto = require('crypto');
 
 import {menus, signals} from '../components/types';
 
@@ -22,19 +23,19 @@ class Home extends React.Component {
             menu: menus.START,
             words: [],
             menuPanel: false,
-            addressList: [],
-            password: ''
+            address: '',
         };
     }
 
     toParent (data){
         console.log('toParent');
         console.log(data);
+        let password;
         switch (data.type){
             case (signals.MNEMONIC_WORDS):
                 this.setState({
                     words: data.data.words,
-                    addressList: data.data.addressList,
+                    address: data.data.address,
                     menu: menus.MNEMONICS
                 });
                 localStorage.setItem('walletData', JSON.stringify(data.data));
@@ -62,23 +63,25 @@ class Home extends React.Component {
                 });
                 break;
             case (signals.PASSWORD_CREATED):
+                password = this.hash(data.password);
                 this.setState({
-                    menu: menus.PASSWORD_CREATED,
-                    password: data.password
+                    menu: menus.PASSWORD_CREATED
                 });
-                localStorage.setItem('walletData', this.encrypt(localStorage.getItem('walletData'), data.password));
-                sessionStorage.setItem('password', data.password);
+                localStorage.setItem('walletData', this.encrypt(localStorage.getItem('walletData'), password));
+                sessionStorage.setItem('password', password);
                 break;
             case (signals.PASSWORD_CHANGED):
-                localStorage.setItem('walletData', this.encrypt(sessionStorage.getItem('walletData'), data.password));
-                sessionStorage.setItem('password', data.password);
+                password = this.hash(data.password);
+                localStorage.setItem('walletData', this.encrypt(sessionStorage.getItem('walletData'), password));
+                sessionStorage.setItem('password', password);
                 this.setState({
                     menu: menus.MAIN
                 });
                 break;
             case (signals.PASSWORD_ENTERED):
-                sessionStorage.setItem('walletData', this.decrypt(localStorage.getItem('walletData'), data.password));
-                sessionStorage.setItem('password', data.password);
+                password = this.hash(data.password);
+                sessionStorage.setItem('walletData', this.decrypt(localStorage.getItem('walletData'), password));
+                sessionStorage.setItem('password', password);
                 this.setState({
                     menu: menus.MAIN
                 });
@@ -103,12 +106,22 @@ class Home extends React.Component {
                     menu: menus.ABOUT
                 });
                 break;
+            case (signals.IMPORT):
+                this.setState({
+                    menu: menus.IMPORT
+                });
+                break;
         }
         if (data.type !== signals.SWITCH_MENU_PANEL){
             this.setState({
                 menuPanel: false
             });
         }
+    }
+    hash (data){
+        const hash = crypto.createHash('sha256');
+        hash.update(data);
+        return hash.digest('hex');
     }
     encrypt (data, password){
         let mykey1 = crypto.createCipher('aes-128-cbc', password);
@@ -141,7 +154,7 @@ class Home extends React.Component {
                 page = <ScreenCreatePassword toParent={this.toParent} encrypt={this.encrypt} type={this.state.menu} />;
                 break;
             case (menus.ENTER_PASSWORD):
-                page = <ScreenEnterPassword toParent={this.toParent} decrypt={this.decrypt} />;
+                page = <ScreenEnterPassword toParent={this.toParent} decrypt={this.decrypt} hash={this.hash} />;
                 break;
             case (menus.PASSWORD_CREATED):
                 page = <ScreenReadyToGo toParent={this.toParent} />;
@@ -151,6 +164,9 @@ class Home extends React.Component {
                 break;
             case (menus.ABOUT):
                 page = <ScreenAbout toParent={this.toParent} />;
+                break;
+            case (menus.IMPORT):
+                page = <ScreenImport toParent={this.toParent} encrypt={this.encrypt} />;
                 break;
         }
         return (

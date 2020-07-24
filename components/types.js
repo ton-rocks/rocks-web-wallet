@@ -7,7 +7,8 @@ export let menus = {
     ENTER_PASSWORD: 'ENTER_PASSWORD',
     PASSWORD_CREATED: 'PASSWORD_CREATED',
     MAIN: 'MAIN',
-    ABOUT: 'ABOUT'
+    ABOUT: 'ABOUT',
+    IMPORT: 'IMPORT'
 
 };
 export let signals = {
@@ -22,5 +23,6 @@ export let signals = {
     LOAD_MAIN: 'LOAD_MAIN',
     LOAD_START: 'LOAD_START',
     SWITCH_MENU_PANEL: 'SWITCH_MENU_PANEL',
-    ABOUT: 'ABOUT'
+    ABOUT: 'ABOUT',
+    IMPORT: 'IMPORT'
 };

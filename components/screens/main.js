@@ -4,38 +4,13 @@ import copy from 'copy-to-clipboard';
 import {signals} from '../types';
 const tonweb = new TonWeb(new TonWeb.HttpProvider('http://45.137.190.200:4800/api/v1/jsonRPC'));
 
-async function generateAddress(){
-    /*const walletData = localStorage.getItem('walletData');
-    let mykey2 = crypto.createDecipher('aes-128-cbc', 'mypassword');
-    let mystr2 = mykey2.update(mystr1, 'hex', 'utf8')
-    mystr2 += mykey2.final('utf8');
-
-    console.log(mystr2);*/
-    //console.log(words);
-
-
-
-    /*const keyPair = await mnemonic.mnemonicToKeyPair(mnemonicArray);
-
-
-    const wallet = tonweb.wallet.create({publicKey: keyPair.publicKey, wc: 0}); // create interface to wallet smart contract (wallet v3 by default)
-
-    const address = await wallet.getAddress();
-    const deploy = wallet.deploy(keyPair.secretKey);
-
-    address.toString(false)*/
-
-
-}
-
 async function getBalance() {
-    const tonweb = new TonWeb();
     const walletData = JSON.parse(sessionStorage.getItem('walletData'));
-    const publicKey = walletData.keyPair.publicKey;
-    const wallet = tonweb.wallet.create({publicKey});
+    const publicKey = Object.values(walletData.keyPair.publicKey);
+    const wallet = tonweb.wallet.create({publicKey: publicKey, wc: 0});
     const address = await wallet.getAddress();
+    console.log('address2 = ' + address.toString(false));
     let balance = await tonweb.getBalance(address);
-    //balance = balance * (Math.random() + 1);
     balance = Math.round(balance / 1000000) / 1000;
     return balance;
 }
@@ -46,16 +21,15 @@ class Content extends React.Component{
         this.state = {
             showReceive: false,
             qrCode: '',
-            lastAddress: '',
+            address: '',
             copiedToClipboard: false,
             balance: '000.000'
         };
     }
     componentDidMount(){
         const walletData = JSON.parse(sessionStorage.getItem('walletData'));
-        const lastAddress = walletData['addressList'][walletData['addressList'].length - 1];
         this.setState({
-            lastAddress
+            address: walletData['address']
         });
         getBalance().then((data) => {
             this.setState({
@@ -76,8 +50,7 @@ class Content extends React.Component{
             type: signals.LOAD_MAIN
         });
         const $this = this;
-        console.log('address: ', this.state.lastAddress);
-        QRCode.toString(this.state.lastAddress, (err, string) => {
+        QRCode.toString(this.state.address, (err, string) => {
             if (err) throw err;
             $this.setState({
                 qrCode: {__html: string},
@@ -87,7 +60,7 @@ class Content extends React.Component{
 
     }
     handleShare(){
-        copy('ton://transfer/' + this.state.lastAddress);
+        copy('ton://transfer/' + this.state.address);
         this.setState({
             copiedToClipboard: true
         });

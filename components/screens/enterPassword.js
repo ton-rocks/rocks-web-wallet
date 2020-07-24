@@ -13,7 +13,7 @@ class Content extends React.Component{
     }
     handleLogin(){
         try {
-            const data = this.props.decrypt(localStorage.getItem('walletData'), this.state.password);
+            const data = this.props.decrypt(localStorage.getItem('walletData'), this.props.hash(this.state.password));
             this.setState({
                 wrongPassword: false
             });
