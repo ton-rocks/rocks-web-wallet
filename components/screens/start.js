@@ -53,7 +53,7 @@ class Content extends React.Component{
 
     importWallet(){
         this.props.toParent({
-            type: signals.IMPORT
+            type: signals.LOAD_IMPORT
         });
     };
 

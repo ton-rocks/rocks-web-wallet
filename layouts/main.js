@@ -25,7 +25,7 @@ class Content extends React.Component{
 
     handleAbout(){
         this.props.toParent({
-            type: signals.ABOUT
+            type: signals.LOAD_ABOUT
         });
     }
     handleChangePassword(){
@@ -36,7 +36,7 @@ class Content extends React.Component{
     handleBackUp(){
         const walletData = JSON.parse(sessionStorage.getItem('walletData'));
         this.props.toParent({
-            type: signals.BACKUP,
+            type: signals.LOAD_BACKUP,
             data: walletData
         });
     }
@@ -55,6 +55,11 @@ class Content extends React.Component{
             type: signals.ENTER_PASSWORD
         });
     }
+    handleTransactions(){
+        this.props.toParent({
+            type: signals.LOAD_TRANSACTIONS
+        });
+    }
 
     render(){
         return (
@@ -68,22 +73,11 @@ class Content extends React.Component{
                 </Head>
                 <div className="body-container">
                     {this.props.children}
-                    {true?'':(
-                        <>
-                            <div id="menuDropdown" style_="display: none">
-                                <div id="menu_about" className="dropdown-item">About</div>
-                                <div id="menu_changePassword" className="dropdown-item">Change password</div>
-                                <div id="menu_backupWallet" className="dropdown-item">Back up wallet</div>
-                                <div id="menu_delete" className="dropdown-item">Delete wallet</div>
-                            </div>
-                            <div id="notify" style_="display: none"></div>
-                        </>
-                    )}
-
                     {
                         this.props.menuPanel ? (
                             <div id="menuDropdown">
                                 <div id="menu_about" className="dropdown-item" onClick={this.handleAbout.bind(this)}>About</div>
+                                <div id="menu_transactions" className="dropdown-item" onClick={this.handleTransactions.bind(this)}>Transactions</div>
                                 <div id="menu_changePassword" className="dropdown-item" onClick={this.handleChangePassword.bind(this)}>Change password</div>
                                 <div id="menu_backupWallet" className="dropdown-item" onClick={this.handleBackUp.bind(this)}>Back up wallet</div>
                                 <div id="menu_delete" className="dropdown-item" onClick={this.handleDelete.bind(this)}>Delete wallet</div>

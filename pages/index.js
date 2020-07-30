@@ -9,6 +9,7 @@ import ScreenReadyToGo from '../components/screens/readyToGo';
 import ScreenMain from '../components/screens/main';
 import ScreenAbout from '../components/screens/about';
 import ScreenImport from '../components/screens/import';
+//import ScreenTransactions from '../components/screens/transaction';
 
 
 
@@ -32,6 +33,33 @@ class Home extends React.Component {
         console.log(data);
         let password;
         switch (data.type){
+            case (signals.LOAD_BACKUP):
+                this.setState({
+                    words: data.data.words,
+                    menu: menus.BACKUP
+                });
+                break;
+            case (signals.LOAD_MAIN):
+                this.setState({
+                    menu: menus.MAIN
+                });
+                break;
+            case (signals.LOAD_START):
+                this.setState({
+                    menu: menus.START
+                });
+                break;
+
+            case (signals.LOAD_ABOUT):
+                this.setState({
+                    menu: menus.ABOUT
+                });
+                break;
+            case (signals.LOAD_IMPORT):
+                this.setState({
+                    menu: menus.IMPORT
+                });
+                break;
             case (signals.MNEMONIC_WORDS):
                 this.setState({
                     words: data.data.words,
@@ -40,12 +68,6 @@ class Home extends React.Component {
                 });
                 localStorage.setItem('walletData', JSON.stringify(data.data));
                 sessionStorage.setItem('walletData', JSON.stringify(data.data));
-                break;
-            case (signals.BACKUP):
-                this.setState({
-                    words: data.data.words,
-                    menu: menus.BACKUP
-                });
                 break;
             case (signals.CREATE_PASSWORD):
                 this.setState({
@@ -86,29 +108,14 @@ class Home extends React.Component {
                     menu: menus.MAIN
                 });
                 break;
-            case (signals.LOAD_MAIN):
-                this.setState({
-                    menu: menus.MAIN
-                });
-                break;
-            case (signals.LOAD_START):
-                this.setState({
-                    menu: menus.START
-                });
-                break;
             case (signals.SWITCH_MENU_PANEL):
                 this.setState({
                     menuPanel: !this.state.menuPanel
                 });
                 break;
-            case (signals.ABOUT):
+            case (signals.LOAD_TRANSACTIONS):
                 this.setState({
-                    menu: menus.ABOUT
-                });
-                break;
-            case (signals.IMPORT):
-                this.setState({
-                    menu: menus.IMPORT
+                    menu: menus.TRANSACTIONS
                 });
                 break;
         }
@@ -168,6 +175,9 @@ class Home extends React.Component {
             case (menus.IMPORT):
                 page = <ScreenImport toParent={this.toParent} encrypt={this.encrypt} />;
                 break;
+            /*case (menus.TRANSACTIONS):
+                page = <ScreenTransactions toParent={this.toParent} encrypt={this.encrypt} />;
+                break;*/
         }
         return (
             <LayoutMain menuPanel={this.state.menuPanel} toParent={this.toParent}>
