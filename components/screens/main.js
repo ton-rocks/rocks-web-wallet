@@ -4,6 +4,13 @@ import copy from 'copy-to-clipboard';
 import {signals} from '../types';
 const tonweb = new TonWeb(new TonWeb.HttpProvider('http://45.137.190.200:4800/api/v1/jsonRPC'));
 
+async function getTransactions(last){
+    const walletData = JSON.parse(sessionStorage.getItem('walletData'));
+    const publicKey = Object.values(walletData.keyPair.publicKey);
+    const wallet = tonweb.wallet.create({publicKey: publicKey, wc: 0});
+    const address = await wallet.getAddress();
+    return await tonweb.provider.getTransactions(address.toString(), 200);
+}
 async function getWalletInfo() {
     try {
         const walletData = JSON.parse(sessionStorage.getItem('walletData'));
@@ -11,38 +18,22 @@ async function getWalletInfo() {
         const wallet = tonweb.wallet.create({publicKey: publicKey, wc: 0});
         const address = await wallet.getAddress();
         const addressInfo = await tonweb.provider.getAddressInfo(address.toString(true, true, true, false));
-        const transData = await tonweb.getTransactions(address);
         let response = {
             deployed: false,
-            balance: Math.round(addressInfo.balance / 1000000) / 1000,
-            transactions: []
+            balance: Math.round(addressInfo.balance / 1000000) / 1000
         };
         const secretKey = new Uint8Array(Object.values(walletData.keyPair.secretKey));
         const deploy = wallet.deploy(secretKey); // deploy method
 
-        //const deployQuery = await deploy.getQuery();   // get deploy query Cell
         if (addressInfo.code !== ''){
             response.deployed = true;
         }else{
             const deploySended = await deploy.send() // deploy wallet contract to blockchain
         }
-        let trans = [];
-        for (let i = 1; i <= 10; i++){
-            transData.transactions.map(val => {
-                trans.push(val);
-            })
-        }
-
-        console.log(trans);
-        response.transactions = trans;
-        //response.transactions = transData.transactions;
-
         return response;
     }catch(e){
-        window.location.reload(false);
+        //window.location.reload(false);
     }
-
-
 }
 
 async function sendCoins(sendAddress, sendAmount, sendComment){
@@ -108,12 +99,16 @@ class Content extends React.Component{
         this.setState({
             address: walletData['address']
         });
-        getWalletInfo().then((data) => {
+        getWalletInfo().then(data => {
             this.setState({
                 balance: data.balance,
                 deployed: data.deployed,
-                transactions: data.transactions,
                 updateMessage: ''
+            });
+        });
+        getTransactions().then(data => {
+            this.setState({
+                transactions: data.transactions
             });
         });
     }
@@ -161,6 +156,7 @@ class Content extends React.Component{
             this.setState({
                 sendInProgress: false
             });
+            console.log(data);
             if (data['@type'] == 'ok'){
                 this.setState({
                     balance: this.state.balance - this.state.sendAmount
