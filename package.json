@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "copy-to-clipboard": "^3.3.1",
-    "next": "9.4.4",
+    "next": "11.1.0",
     "password-hash": "^1.2.2",
     "qrcode": "^1.4.4",
     "react": "16.13.1",
